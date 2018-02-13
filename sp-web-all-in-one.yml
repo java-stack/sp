@@ -1,0 +1,93 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sp-kafka
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sp-kafka
+    spec:
+      containers:
+      - name: sp-kafka
+        image: spotify/kafka
+        ports:
+        - containerPort: 9092
+          name: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sp-kafka
+spec:
+  ports:
+  - port: 9092
+  selector:
+    app: sp-kafka
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sp-activemq
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sp-activemq
+    spec:
+      containers:
+      - name: sp-activemq
+        image: webcenter/activemq
+        ports:
+        - containerPort: 61616
+          name: activemq
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sp-activemq
+spec:
+  ports:
+  - port: 61616
+  selector:
+    app: sp-activemq
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: sp-web
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5 
+  template:
+    metadata:
+      labels:
+        app: sp-web
+    spec:
+      containers:
+      - name: sp-web
+        image: shaqsacr.azurecr.io/sp-web:v1
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+          limits:
+            cpu: 500m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sp-web
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    app: sp-web

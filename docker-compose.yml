@@ -1,0 +1,19 @@
+version: '3'
+services:
+  sp-kafka:
+    image: spotify/kafka
+    container_name: sp-kafka
+  sp-activemq:
+    image: webcenter/activemq
+    container_name: sp-activemq
+  sp-web:
+    build: .
+    image: sp-web
+    container_name: sp-web
+    ports:
+     - "80:80"
+    volumes:
+     - maven-repo:/root/.m2
+
+volumes:
+  maven-repo:

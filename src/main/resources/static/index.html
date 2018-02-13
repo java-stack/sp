@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Websocket Broadcast Sample View</title>
+    <link href="styles.css" rel="stylesheet">
+    <style type="text/css">
+        body {
+            background-color: white;
+        }
+        #connect-container {
+            float: left;
+            width: 450px
+        }
+
+        #connect-container div {
+            padding: 5px;
+        }
+
+        #console-container {
+            float: left;
+            margin-left: 15px;
+            width: 450px;
+        }
+
+        #console {
+            border: 1px solid #CCCCCC;
+            border-right-color: #999999;
+            border-bottom-color: #999999;
+            height: 370px;
+            overflow-y: scroll;
+            padding: 5px;
+            width: 100%;
+        }
+
+        #console p {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+    <script type="text/javascript">
+        var ws = null;
+        var count = 0;
+
+        function setConnected(connected) {
+            document.getElementById('connect').disabled = connected;
+            document.getElementById('disconnect').disabled = !connected;
+        }
+
+        function connect() {
+            var target = document.getElementById('target').value;
+            ws = new WebSocket(target);
+            ws.onopen = function () {
+                count = 0;
+                setConnected(true);
+                log('Info: WebSocket connection opened.');
+            };
+            ws.onmessage = function (event) {
+                count = count + 1;
+                log('Received: ' + event.data);
+            };
+            ws.onclose = function () {
+                count = null;
+                setConnected(false);
+                log('Info: WebSocket connection closed.');
+            };
+        }
+
+        function updateTarget() {
+            if (window.location.protocol == 'http:') {
+                document.getElementById('target').value = 'ws://' + window.location.host + document.getElementById('target').value;
+            } else {
+                document.getElementById('target').value = 'wss://' + window.location.host + document.getElementById('target').value;
+            }
+        }
+
+        function disconnect() {
+            if (ws != null) {
+                ws.close();
+                ws = null;
+            }
+            setConnected(false);
+        }
+
+        function log(message) {
+            document.getElementById("count").textContent = count;
+            var console = document.getElementById('console');
+            var p = document.createElement('p');
+            p.style.wordWrap = 'break-word';
+            p.appendChild(document.createTextNode(message));
+            console.appendChild(p);
+            while (console.childNodes.length > 25) {
+                console.removeChild(console.firstChild);
+            }
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function sendJms() {
+            var count = document.getElementById('messageCount').value;
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+            };
+            xhttp.open("GET", "jms/send?mcount=" + count, true);
+            xhttp.send();
+        }
+
+        function sendKafka() {
+            var count = document.getElementById('messageCount').value;
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+            };
+            xhttp.open("GET", "kafka/send?mcount=" + count, true);
+            xhttp.send();
+        }
+
+
+        function clearConsole() {
+            var console = document.getElementById('console');
+            console.innerHTML = '';
+        }
+    </script>
+</head>
+<body onload="updateTarget()">
+<noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websockets rely on Javascript being
+    enabled. Please enable
+    Javascript and reload this page!</h2></noscript>
+<nav class="navbar navbar-ct-blue navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand text-ivy">Deep Azure - McKesson</a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav navbar-right navbar-uppercase">
+                <li>
+                    <a>Azure Container Service (AKS)</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div style="margin-top: 100px;">
+    <div id="connect-container">
+        <div>
+            <input id="target" class="form-control" type="text" size="40" style="width: 350px; margin-bottom: 0;" value="/broadcast"/>
+        </div>
+        <div>
+            <button id="connect" class="btn btn-fill btn-round btn-success" onclick="connect();">Connect</button>
+            <button id="disconnect" class="btn btn-round btn-danger" disabled="disabled" onclick="disconnect();">Disconnect</button>
+            <span class="text-strong text-danger">Count: </span><span class="badge" id="count"></span>
+        </div>
+
+        <div class="m-t">
+            <input id="messageCount" class="form-control" type="number" value="200" size="40" style="width: 350px; margin-bottom: 0;"/>
+        </div>
+
+        <div class="text-nowrap">
+            <button class="btn btn-round btn-warning" onclick="sendJms();">Invoke JMS</button>
+            <button class="btn btn-round btn-info" onclick="sendKafka();">Invoke Kafka</button>
+        </div>
+
+    </div>
+    <div id="console-container">
+        <span class="text-strong text-danger">Received Messages: </span>
+        <div class="form-control" id="console" style="margin-bottom: 10px;"></div>
+        <button class="btn btn-round btn-danger btn-block" onclick="clearConsole();">Clear</button>
+    </div>
+</div>
+</body>
+</html>
